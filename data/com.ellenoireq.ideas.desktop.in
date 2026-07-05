@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Ideas
+Exec=ideas
+Icon=com.ellenoireq.ideas
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=GTK;
+StartupNotify=true
+DBusActivatable=true

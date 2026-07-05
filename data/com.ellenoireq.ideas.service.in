@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=com.ellenoireq.ideas
+Exec=@bindir@/ideas --gapplication-service
