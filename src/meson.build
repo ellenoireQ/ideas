@@ -29,6 +29,7 @@ ideas_sources = [
   'application.vala',
   'window.vala',
   'utils/version.vala',
+  'utils/environment.vala',
 ]
 
 ideas_deps = [
