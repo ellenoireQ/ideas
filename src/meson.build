@@ -4,8 +4,7 @@ window_ui = custom_target(
   output: 'window.ui',
   command: [
     'sh',
-    '-c',
-    'blueprint-compiler compile "$1" > "$2"',
+    '-c', 'blueprint-compiler compile "$1" > "$2"',
     'sh',
     '@INPUT@',
     '@OUTPUT@',
@@ -18,8 +17,7 @@ shortcuts_dialog_ui = custom_target(
   output: 'shortcuts-dialog.ui',
   command: [
     'sh',
-    '-c',
-    'blueprint-compiler compile "$1" > "$2"',
+    '-c', 'blueprint-compiler compile "$1" > "$2"',
     'sh',
     '@INPUT@',
     '@OUTPUT@',
@@ -30,6 +28,7 @@ ideas_sources = [
   'main.vala',
   'application.vala',
   'window.vala',
+  'utils/version.vala',
 ]
 
 ideas_deps = [

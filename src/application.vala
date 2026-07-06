@@ -19,46 +19,46 @@
  */
 
 public class Ideas.Application : Adw.Application {
-    public Application () {
-        Object (
-            application_id: "com.ellenoireq.ideas",
+  public Application () {
+    Object (
+            application_id: UtilsVersion.app_pkg_name,
             flags: ApplicationFlags.DEFAULT_FLAGS,
             resource_base_path: "/com/ellenoireq/ideas"
-        );
-    }
+    );
+  }
 
-    construct {
-        ActionEntry[] action_entries = {
-            { "about", this.on_about_action },
-            { "preferences", this.on_preferences_action },
-            { "quit", this.quit }
-        };
-        this.add_action_entries (action_entries, this);
-        this.set_accels_for_action ("app.quit", {"<control>q"});
-    }
+  construct {
+    ActionEntry[] action_entries = {
+      { "about", this.on_about_action },
+      { "preferences", this.on_preferences_action },
+      { "quit", this.quit }
+    };
+    this.add_action_entries (action_entries, this);
+    this.set_accels_for_action ("app.quit", { "<control>q" });
+  }
 
-    public override void activate () {
-        base.activate ();
-        var win = this.active_window ?? new Ideas.Window (this);
-        win.present ();
-    }
+  public override void activate () {
+    base.activate ();
+    var win = this.active_window ?? new Ideas.Window (this);
+    win.present ();
+  }
 
-    private void on_about_action () {
-        string[] developers = { "elle" };
-        var about = new Adw.AboutDialog () {
-            application_name = "Ideas",
-            application_icon = "com.ellenoireq.ideas",
-            developer_name = "elle",
-            translator_credits = _("translator-credits"),
-            version = "0.1.0",
-            developers = developers,
-            copyright = "© 2026 elle",
-        };
+  private void on_about_action () {
+    string[] developer = { UtilsVersion.developer_name };
+    var about = new Adw.AboutDialog () {
+      application_name = UtilsVersion.app_name,
+      application_icon = UtilsVersion.app_pkg_name,
+      developer_name = UtilsVersion.developer_name,
+      translator_credits = _("translator-credits"),
+      version = UtilsVersion.app_version,
+      developers = developer,
+      copyright = UtilsVersion.copyright,
+    };
 
-        about.present (this.active_window);
-    }
+    about.present (this.active_window);
+  }
 
-    private void on_preferences_action () {
-        message ("app.preferences action activated");
-    }
+  private void on_preferences_action () {
+    message ("app.preferences action activated");
+  }
 }
