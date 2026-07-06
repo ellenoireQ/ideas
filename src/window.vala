@@ -20,10 +20,8 @@
 
 [GtkTemplate (ui = "/com/ellenoireq/ideas/window.ui")]
 public class Ideas.Window : Adw.ApplicationWindow {
-    [GtkChild]
-    private unowned Gtk.Label label;
-
-    public Window (Gtk.Application app) {
-        Object (application: app);
-    }
+  [GtkChild]
+  public Window (Gtk.Application app) {
+    Object (application: app);
+  }
 }
