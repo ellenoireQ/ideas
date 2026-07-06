@@ -18,12 +18,78 @@ template $IdeasWindow : Adw.ApplicationWindow {
       }
     }
 
-    content: Gtk.Label label {
-      label: _("Hello, World!");
+    content: Gtk.Box {
+      orientation: horizontal;
+      spacing: 0;
 
-      styles [
-        "title-1"
-      ]
+      Gtk.ScrolledWindow {
+        width-request: 260;
+        hscrollbar-policy: never;
+        vexpand: true;
+        styles [
+          "sidebar"
+        ]
+
+        Gtk.Box {
+          orientation: vertical;
+          spacing: 12;
+          margin-top: 24;
+          margin-bottom: 24;
+          margin-start: 16;
+          margin-end: 16;
+
+          Gtk.Label {
+            label: _("Lorem ipsum");
+            xalign: 0;
+
+            styles [
+              "title-2"
+            ]
+          }
+
+          Gtk.Button {
+            label: _("Lorem ipsum");
+            halign: fill;
+          }
+
+          Gtk.Button {
+            label: _("Lorem ipsum");
+            halign: fill;
+          }
+
+          Gtk.Button {
+            label: _("Lorem ipsum");
+            halign: fill;
+          }
+        }
+      }
+
+      Gtk.Box {
+        hexpand: true;
+        vexpand: true;
+        orientation: vertical;
+        spacing: 12;
+        margin-top: 24;
+        margin-bottom: 24;
+        margin-start: 24;
+        margin-end: 24;
+
+        Gtk.Label {
+          label: _("Lorem ipsum");
+          xalign: 0;
+
+          styles [
+            "title-1"
+          ]
+        }
+
+        Gtk.Label {
+          label: _("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+          wrap: true;
+          xalign: 0;
+          hexpand: true;
+        }
+      }
     };
   };
 }
