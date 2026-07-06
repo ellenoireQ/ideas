@@ -1,7 +1,7 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $IdeasWindow : Adw.ApplicationWindow {
+template $IdeasWindow: Adw.ApplicationWindow {
   title: _("Ideas");
   default-width: 800;
   default-height: 600;
@@ -26,8 +26,9 @@ template $IdeasWindow : Adw.ApplicationWindow {
         width-request: 260;
         hscrollbar-policy: never;
         vexpand: true;
+
         styles [
-          "sidebar"
+          "sidebar",
         ]
 
         Gtk.Box {
@@ -43,7 +44,7 @@ template $IdeasWindow : Adw.ApplicationWindow {
             xalign: 0;
 
             styles [
-              "title-2"
+              "title-2",
             ]
           }
 
@@ -64,30 +65,13 @@ template $IdeasWindow : Adw.ApplicationWindow {
         }
       }
 
-      Gtk.Box {
+      Gtk.ScrolledWindow {
         hexpand: true;
         vexpand: true;
-        orientation: vertical;
-        spacing: 12;
-        margin-top: 24;
-        margin-bottom: 24;
-        margin-start: 24;
-        margin-end: 24;
 
-        Gtk.Label {
-          label: _("Lorem ipsum");
-          xalign: 0;
-
-          styles [
-            "title-1"
-          ]
-        }
-
-        Gtk.Label {
-          label: _("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
-          wrap: true;
-          xalign: 0;
-          hexpand: true;
+        Gtk.TextView my_text_view {
+          wrap-mode: word_char;
+          editable: true;
         }
       }
     };
@@ -112,3 +96,4 @@ menu primary_menu {
     }
   }
 }
+
