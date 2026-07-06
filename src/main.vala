@@ -19,10 +19,22 @@
  */
 
 int main (string[] args) {
-    Intl.bindtextdomain (Config.GETTEXT_PACKAGE, Config.LOCALEDIR);
-    Intl.bind_textdomain_codeset (Config.GETTEXT_PACKAGE, "UTF-8");
-    Intl.textdomain (Config.GETTEXT_PACKAGE);
+  Intl.bindtextdomain (Config.GETTEXT_PACKAGE, Config.LOCALEDIR);
+  Intl.bind_textdomain_codeset (Config.GETTEXT_PACKAGE, "UTF-8");
+  Intl.textdomain (Config.GETTEXT_PACKAGE);
 
-    var app = new Ideas.Application ();
-    return app.run (args);
+  string cache = Path.build_filename (
+                                      Environment.get_user_cache_dir (),
+                                      UtilsVersion.app_pkg_name,
+                                      "autosave"
+  );
+
+  if (FileUtils.test (cache, FileTest.IS_DIR)) {
+    print ("Folder already exists\n");
+  } else {
+    DirUtils.create_with_parents (cache, 0700);
+  }
+
+  var app = new Ideas.Application ();
+  return app.run (args);
 }
