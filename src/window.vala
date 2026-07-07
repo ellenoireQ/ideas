@@ -20,15 +20,34 @@
 
 [GtkTemplate (ui = "/com/ellenoireq/ideas/window.ui")]
 public class Ideas.Window : Adw.ApplicationWindow {
+  private unowned Env app = Ideas.Application.instance ().config;
+
   [GtkChild]
   private unowned Gtk.TextView my_text_view;
+  private uint autosave_timeout = 0;
+
   public Window (Gtk.Application app) {
     Object (application: app);
   }
 
   construct {
     var buffer = my_text_view.get_buffer ();
-    buffer.changed.connect (on_text_changed);
+
+    buffer.changed.connect (() => {
+      on_text_changed ();
+
+      if (autosave_timeout != 0) {
+        Source.remove (autosave_timeout);
+      }
+
+      autosave_timeout = Timeout.add (500, () => {
+        autosave_timeout = 0;
+
+        autosave ();
+
+        return Source.REMOVE;
+      });
+    });
   }
 
   private void on_text_changed () {
@@ -38,5 +57,21 @@ public class Ideas.Window : Adw.ApplicationWindow {
 
     string text = buffer.get_text (start, end, false);
     print ("Current live text: %s\n", text);
+  }
+
+  private void autosave () {
+    var buffer = my_text_view.get_buffer ();
+
+    Gtk.TextIter start, end;
+    buffer.get_bounds (out start, out end);
+
+    string text = buffer.get_text (start, end, false);
+
+    try {
+      FileUtils.set_contents (app.cache_path + "/untitled.md", text);
+      print ("Autosaved: %s\n", app.cache_path);
+    } catch (FileError e) {
+      warning ("Autosave failed: %s", e.message);
+    }
   }
 }
