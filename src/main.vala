@@ -33,13 +33,14 @@ int main (string[] args) {
 
   if (FileUtils.test (cache, FileTest.IS_DIR)) {
     print ("Folder already exists\n");
-    app.config.set (EVar.CACHE_FOLDER, true);
+    app.config.has_folder = true;
   } else {
     if (DirUtils.create_with_parents (cache, 0700) == 0) {
-      app.config.set (EVar.CACHE_FOLDER, true);
+      app.config.has_folder = true;
       print ("Folder created\n");
     } else {
-      app.config.set (EVar.CACHE_FOLDER, false);
+      app.config.has_folder = false;
+
       warning ("Failed to create cache directory: %s", cache);
     }
   }
