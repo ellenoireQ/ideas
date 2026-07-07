@@ -19,7 +19,7 @@
  */
 
 int main (string[] args) {
-  var config = new Env ();
+  var app = new Ideas.Application ();
 
   Intl.bindtextdomain (Config.GETTEXT_PACKAGE, Config.LOCALEDIR);
   Intl.bind_textdomain_codeset (Config.GETTEXT_PACKAGE, "UTF-8");
@@ -33,17 +33,16 @@ int main (string[] args) {
 
   if (FileUtils.test (cache, FileTest.IS_DIR)) {
     print ("Folder already exists\n");
-    config.set (EVar.CACHE_FOLDER, true);
+    app.config.set (EVar.CACHE_FOLDER, true);
   } else {
     if (DirUtils.create_with_parents (cache, 0700) == 0) {
-      config.set (EVar.CACHE_FOLDER, true);
+      app.config.set (EVar.CACHE_FOLDER, true);
       print ("Folder created\n");
     } else {
-      config.set (EVar.CACHE_FOLDER, false);
+      app.config.set (EVar.CACHE_FOLDER, false);
       warning ("Failed to create cache directory: %s", cache);
     }
   }
 
-  var app = new Ideas.Application ();
   return app.run (args);
 }

@@ -19,12 +19,15 @@
  */
 
 public class Ideas.Application : Adw.Application {
+  public Env config { get; private set; }
+
   public Application () {
     Object (
             application_id: UtilsVersion.app_pkg_name,
             flags: ApplicationFlags.DEFAULT_FLAGS,
             resource_base_path: "/com/ellenoireq/ideas"
     );
+    config = new Env ();
   }
 
   construct {
