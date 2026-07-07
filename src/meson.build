@@ -36,6 +36,7 @@ ideas_deps = [
   config_dep,
   dependency('gtk4'),
   dependency('libadwaita-1', version: '>= 1.4'),
+  valamark_dep,
 ]
 
 ideas_sources += gnome.compile_resources(

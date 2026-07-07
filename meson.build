@@ -27,9 +27,9 @@ config_inc = include_directories('.')
 add_project_arguments('-DGETTEXT_PACKAGE="' + meson.project_name() + '"', language: 'c')
 
 subdir('data')
+subdir('bindings/')
 subdir('src')
 subdir('po')
-subdir('bindings/')
 
 gnome.post_install(
   glib_compile_schemas: true,

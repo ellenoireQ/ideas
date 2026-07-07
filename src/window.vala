@@ -21,6 +21,8 @@
 [GtkTemplate (ui = "/com/ellenoireq/ideas/window.ui")]
 public class Ideas.Window : Adw.ApplicationWindow {
   private unowned Env app = Ideas.Application.instance ().config;
+  private Valamark pd;
+
 
   [GtkChild]
   private unowned Gtk.TextView my_text_view;
@@ -31,10 +33,16 @@ public class Ideas.Window : Adw.ApplicationWindow {
   }
 
   construct {
+    pd = new Valamark (app.cache_path + "/untitled.md");
+
     var buffer = my_text_view.get_buffer ();
 
     buffer.changed.connect (() => {
       on_text_changed ();
+
+      foreach (var element in pd.value ()) {
+        print ("%s", element.element);
+      }
 
       if (autosave_timeout != 0) {
         Source.remove (autosave_timeout);
