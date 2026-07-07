@@ -34,9 +34,11 @@ int main (string[] args) {
   if (FileUtils.test (cache, FileTest.IS_DIR)) {
     print ("Folder already exists\n");
     app.config.has_folder = true;
+    app.config.cache_path = cache;
   } else {
     if (DirUtils.create_with_parents (cache, 0700) == 0) {
       app.config.has_folder = true;
+      app.config.cache_path = cache;
       print ("Folder created\n");
     } else {
       app.config.has_folder = false;
