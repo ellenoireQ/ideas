@@ -30,6 +30,10 @@ public class Ideas.Application : Adw.Application {
     config = new Env ();
   }
 
+  public static Application instance () {
+    return (Application) GLib.Application.get_default ();
+  }
+
   construct {
     ActionEntry[] action_entries = {
       { "about", this.on_about_action },
