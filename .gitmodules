@@ -1,0 +1,3 @@
+[submodule "bindings/valamark"]
+	path = bindings/valamark
+	url = https://github.com/ellenoireQ/valamark
