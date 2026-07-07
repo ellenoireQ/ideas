@@ -21,7 +21,22 @@
 [GtkTemplate (ui = "/com/ellenoireq/ideas/window.ui")]
 public class Ideas.Window : Adw.ApplicationWindow {
   [GtkChild]
+  private unowned Gtk.TextView my_text_view;
   public Window (Gtk.Application app) {
     Object (application: app);
+  }
+
+  construct {
+    var buffer = my_text_view.get_buffer ();
+    buffer.changed.connect (on_text_changed);
+  }
+
+  private void on_text_changed () {
+    var buffer = my_text_view.get_buffer ();
+    Gtk.TextIter start, end;
+    buffer.get_bounds (out start, out end);
+
+    string text = buffer.get_text (start, end, false);
+    print ("Current live text: %s\n", text);
   }
 }
