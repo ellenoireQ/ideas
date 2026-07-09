@@ -69,9 +69,14 @@ template $IdeasWindow: Adw.ApplicationWindow {
         hexpand: true;
         vexpand: true;
 
-        Gtk.TextView my_text_view {
+        Gtk.TextView preview_text_view {
           wrap-mode: word_char;
           editable: true;
+          cursor-visible: false;
+          left-margin: 12;
+          right-margin: 12;
+          top-margin: 12;
+          bottom-margin: 12;
         }
       }
     };

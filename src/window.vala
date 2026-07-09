@@ -22,10 +22,19 @@
 public class Ideas.Window : Adw.ApplicationWindow {
   private unowned Env app = Ideas.Application.instance ().config;
   private Valamark pd;
-
+  private bool updating_preview = false;
+  private uint preview_timeout = 0;
+  private Gtk.TextTag? heading1_tag = null;
+  private Gtk.TextTag? heading2_tag = null;
+  private Gtk.TextTag? heading3_tag = null;
+  private Gtk.TextTag? heading4_tag = null;
+  private Gtk.TextTag? heading5_tag = null;
+  private Gtk.TextTag? heading6_tag = null;
+  private Gtk.TextTag? hidden_tag = null;
 
   [GtkChild]
-  private unowned Gtk.TextView my_text_view;
+  private unowned Gtk.TextView preview_text_view;
+
   private uint autosave_timeout = 0;
 
   public Window (Gtk.Application app) {
@@ -33,16 +42,11 @@ public class Ideas.Window : Adw.ApplicationWindow {
   }
 
   construct {
-    pd = new Valamark (app.cache_path + "/untitled.md");
-
-    var buffer = my_text_view.get_buffer ();
+    var buffer = preview_text_view.get_buffer ();
+    setup_preview_tags ();
 
     buffer.changed.connect (() => {
       on_text_changed ();
-
-      foreach (var element in pd.value ()) {
-        print ("%s", element.element);
-      }
 
       if (autosave_timeout != 0) {
         Source.remove (autosave_timeout);
@@ -59,17 +63,31 @@ public class Ideas.Window : Adw.ApplicationWindow {
   }
 
   private void on_text_changed () {
-    var buffer = my_text_view.get_buffer ();
+    if (updating_preview) {
+      return;
+    }
+
+    var buffer = preview_text_view.get_buffer ();
     Gtk.TextIter start, end;
     buffer.get_bounds (out start, out end);
 
     string text = buffer.get_text (start, end, false);
     print ("Current live text: %s\n", text);
+
+    if (preview_timeout != 0) {
+      Source.remove (preview_timeout);
+    }
+
+    preview_timeout = Timeout.add (300, () => {
+      preview_timeout = 0;
+      apply_inline_styles (text);
+
+      return Source.REMOVE;
+    });
   }
 
   private void autosave () {
-    var buffer = my_text_view.get_buffer ();
-
+    var buffer = preview_text_view.get_buffer ();
     Gtk.TextIter start, end;
     buffer.get_bounds (out start, out end);
 
@@ -80,6 +98,100 @@ public class Ideas.Window : Adw.ApplicationWindow {
       print ("Autosaved: %s\n", app.cache_path);
     } catch (FileError e) {
       warning ("Autosave failed: %s", e.message);
+    }
+  }
+
+  private void setup_preview_tags () {
+    var preview_buffer = preview_text_view.get_buffer ();
+
+    heading1_tag = preview_buffer.create_tag ("heading1", "weight", Pango.Weight.BOLD, "scale", 2.0);
+    heading2_tag = preview_buffer.create_tag ("heading2", "weight", Pango.Weight.BOLD, "scale", 1.6);
+    heading3_tag = preview_buffer.create_tag ("heading3", "weight", Pango.Weight.BOLD, "scale", 1.35);
+    heading4_tag = preview_buffer.create_tag ("heading4", "weight", Pango.Weight.BOLD, "scale", 1.2);
+    heading5_tag = preview_buffer.create_tag ("heading5", "weight", Pango.Weight.BOLD, "scale", 1.1);
+    heading6_tag = preview_buffer.create_tag ("heading6", "weight", Pango.Weight.BOLD, "scale", 1.0);
+    hidden_tag = preview_buffer.create_tag ("hidden", "invisible", true);
+  }
+
+  private void apply_inline_styles (string text) {
+    updating_preview = true;
+
+    try {
+      var buffer = preview_text_view.get_buffer ();
+      
+      Gtk.TextIter start, end;
+      buffer.get_bounds (out start, out end);
+      buffer.remove_all_tags (start, end);
+
+      string[] lines = text.split ("\n");
+      int line_num = 0;
+
+      foreach (string line in lines) {
+        Gtk.TextIter line_start, line_end;
+        buffer.get_iter_at_line (out line_start, line_num);
+        line_end = line_start;
+        
+        if (!line_end.ends_line ()) {
+          line_end.forward_to_line_end ();
+        }
+
+        if (line.strip ().has_prefix ("#")) {
+          int hash_count = 0;
+          int first_non_hash = 0;
+          
+          for (int i = 0; i < line.length; i++) {
+            if (line[i] == '#') {
+              hash_count++;
+            } else {
+              first_non_hash = i;
+              break;
+            }
+          }
+
+          while (first_non_hash < line.length && line[first_non_hash].isspace ()) {
+            first_non_hash++;
+          }
+
+          if (hash_count > 0 && hash_count <= 6 && first_non_hash < line.length) {
+            Gtk.TextTag? tag = null;
+
+            switch (hash_count) {
+            case 1:
+              tag = heading1_tag;
+              break;
+            case 2:
+              tag = heading2_tag;
+              break;
+            case 3:
+              tag = heading3_tag;
+              break;
+            case 4:
+              tag = heading4_tag;
+              break;
+            case 5:
+              tag = heading5_tag;
+              break;
+            case 6:
+              tag = heading6_tag;
+              break;
+            }
+
+            if (tag != null) {
+              Gtk.TextIter marker_end = line_start;
+              marker_end.forward_chars (first_non_hash);
+              buffer.apply_tag (hidden_tag, line_start, marker_end);
+
+              Gtk.TextIter text_start = line_start;
+              text_start.forward_chars (first_non_hash);
+              buffer.apply_tag (tag, text_start, line_end);
+            }
+          }
+        }
+
+        line_num++;
+      }
+    } finally {
+      updating_preview = false;
     }
   }
 }
