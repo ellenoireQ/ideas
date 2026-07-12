@@ -38,7 +38,7 @@ public class Ideas.Window : Adw.ApplicationWindow {
   private uint autosave_timeout = 0;
 
   public Window (Gtk.Application app) {
-    Object (application: app);
+    Object (application : app);
   }
 
   construct {
@@ -118,60 +118,67 @@ public class Ideas.Window : Adw.ApplicationWindow {
 
     try {
       var buffer = preview_text_view.get_buffer ();
-      
+
+      buffer.begin_user_action ();
+
       Gtk.TextIter start, end;
       buffer.get_bounds (out start, out end);
       buffer.remove_all_tags (start, end);
 
-      string[] lines = text.split ("\n");
-      int line_num = 0;
+      int total_lines = buffer.get_line_count ();
 
-      foreach (string line in lines) {
+      for (int line_num = 0; line_num < total_lines; line_num++) {
         Gtk.TextIter line_start, line_end;
         buffer.get_iter_at_line (out line_start, line_num);
         line_end = line_start;
-        
+
         if (!line_end.ends_line ()) {
           line_end.forward_to_line_end ();
         }
 
-        if (line.strip ().has_prefix ("#")) {
+        string line = buffer.get_text (line_start, line_end, false);
+
+        if (line.has_prefix ("#")) {
           int hash_count = 0;
-          int first_non_hash = 0;
-          
-          for (int i = 0; i < line.length; i++) {
-            if (line[i] == '#') {
-              hash_count++;
-            } else {
-              first_non_hash = i;
-              break;
-            }
+          int char_pos = 0;
+
+          while (char_pos < line.length && line[char_pos] == '#') {
+            hash_count++;
+            char_pos++;
           }
+
+          int first_non_hash = char_pos;
 
           while (first_non_hash < line.length && line[first_non_hash].isspace ()) {
             first_non_hash++;
           }
 
-          if (hash_count > 0 && hash_count <= 6 && first_non_hash < line.length) {
+          bool valid_heading = hash_count > 0 && hash_count <= 6;
+
+          if (valid_heading && first_non_hash == char_pos && first_non_hash < line.length) {
+            valid_heading = false;
+          }
+
+          if (valid_heading) {
             Gtk.TextTag? tag = null;
 
             switch (hash_count) {
-            case 1:
+            case 1 :
               tag = heading1_tag;
               break;
-            case 2:
+            case 2 :
               tag = heading2_tag;
               break;
-            case 3:
+            case 3 :
               tag = heading3_tag;
               break;
-            case 4:
+            case 4 :
               tag = heading4_tag;
               break;
-            case 5:
+            case 5 :
               tag = heading5_tag;
               break;
-            case 6:
+            case 6 :
               tag = heading6_tag;
               break;
             }
@@ -181,15 +188,18 @@ public class Ideas.Window : Adw.ApplicationWindow {
               marker_end.forward_chars (first_non_hash);
               buffer.apply_tag (hidden_tag, line_start, marker_end);
 
-              Gtk.TextIter text_start = line_start;
-              text_start.forward_chars (first_non_hash);
-              buffer.apply_tag (tag, text_start, line_end);
+              if (first_non_hash < line.length) {
+                Gtk.TextIter text_start = line_start;
+                text_start.forward_chars (first_non_hash);
+                buffer.apply_tag (tag, text_start, line_end);
+                print ("  Applied heading%d tag\n", hash_count);
+              }
             }
           }
         }
-
-        line_num++;
       }
+
+      buffer.end_user_action ();
     } finally {
       updating_preview = false;
     }
