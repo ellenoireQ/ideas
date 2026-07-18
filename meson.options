@@ -1,0 +1,6 @@
+option(
+  'test-valamark',
+  type: 'boolean',
+  value: false,
+  description: 'Build helper valamark',
+)
