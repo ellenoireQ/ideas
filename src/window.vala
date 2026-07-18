@@ -21,7 +21,6 @@
 [GtkTemplate (ui = "/com/ellenoireq/ideas/window.ui")]
 public class Ideas.Window : Adw.ApplicationWindow {
   private unowned Env app = Ideas.Application.instance ().config;
-  private Valamark pd;
   private bool updating_preview = false;
   private uint preview_timeout = 0;
   private Gtk.TextTag? heading1_tag = null;
@@ -30,6 +29,7 @@ public class Ideas.Window : Adw.ApplicationWindow {
   private Gtk.TextTag? heading4_tag = null;
   private Gtk.TextTag? heading5_tag = null;
   private Gtk.TextTag? heading6_tag = null;
+  private Gtk.TextTag? paragraph_tag = null;
   private Gtk.TextTag? hidden_tag = null;
 
   [GtkChild]
@@ -46,6 +46,10 @@ public class Ideas.Window : Adw.ApplicationWindow {
     setup_preview_tags ();
 
     buffer.changed.connect (() => {
+      if (updating_preview) {
+        return;
+      }
+
       on_text_changed ();
 
       if (autosave_timeout != 0) {
@@ -67,19 +71,19 @@ public class Ideas.Window : Adw.ApplicationWindow {
       return;
     }
 
-    var buffer = preview_text_view.get_buffer ();
-    Gtk.TextIter start, end;
-    buffer.get_bounds (out start, out end);
-
-    string text = buffer.get_text (start, end, false);
-    print ("Current live text: %s\n", text);
-
+    // Debounce the styling application to prevent blinking
     if (preview_timeout != 0) {
       Source.remove (preview_timeout);
     }
 
-    preview_timeout = Timeout.add (300, () => {
+    preview_timeout = Timeout.add (150, () => {
       preview_timeout = 0;
+
+      var buffer = preview_text_view.get_buffer ();
+      Gtk.TextIter start, end;
+      buffer.get_bounds (out start, out end);
+      string text = buffer.get_text (start, end, false);
+
       apply_inline_styles (text);
 
       return Source.REMOVE;
@@ -110,96 +114,122 @@ public class Ideas.Window : Adw.ApplicationWindow {
     heading4_tag = preview_buffer.create_tag ("heading4", "weight", Pango.Weight.BOLD, "scale", 1.2);
     heading5_tag = preview_buffer.create_tag ("heading5", "weight", Pango.Weight.BOLD, "scale", 1.1);
     heading6_tag = preview_buffer.create_tag ("heading6", "weight", Pango.Weight.BOLD, "scale", 1.0);
-    hidden_tag = preview_buffer.create_tag ("hidden", "invisible", true);
+    paragraph_tag = preview_buffer.create_tag ("paragraph");
+    hidden_tag = preview_buffer.create_tag ("hidden", "foreground", "#00000000", "size", 1);
   }
 
   private void apply_inline_styles (string text) {
+    if (updating_preview) {
+      return;
+    }
+
     updating_preview = true;
 
     try {
       var buffer = preview_text_view.get_buffer ();
 
-      buffer.begin_user_action ();
+      // Save cursor position before making changes
+      Gtk.TextMark insert_mark = buffer.get_insert ();
+      Gtk.TextIter cursor_pos;
+      buffer.get_iter_at_mark (out cursor_pos, insert_mark);
+      int cursor_offset = cursor_pos.get_offset ();
 
+      // Remove all existing tags
       Gtk.TextIter start, end;
       buffer.get_bounds (out start, out end);
       buffer.remove_all_tags (start, end);
 
-      int total_lines = buffer.get_line_count ();
+      // Parse with valamark
+      var valamark = new Valamark.from_text (text);
+      ParsedElement[] elements = valamark.value ();
 
-      for (int line_num = 0; line_num < total_lines; line_num++) {
+      // Process each line in the buffer and match with parsed elements
+      string[] lines = text.split ("\n");
+      int element_idx = 0;
+
+      for (int line_num = 0; line_num < lines.length; line_num++) {
+        string line = lines[line_num];
+        string trimmed = line.strip ();
+
+        // Skip empty lines
+        if (trimmed == "") {
+          continue;
+        }
+
+        // Get buffer iterators for this line
         Gtk.TextIter line_start, line_end;
         buffer.get_iter_at_line (out line_start, line_num);
         line_end = line_start;
-
         if (!line_end.ends_line ()) {
           line_end.forward_to_line_end ();
         }
 
-        string line = buffer.get_text (line_start, line_end, false);
+        // Find matching element by content
+        ParsedElement? matched_element = null;
+        if (element_idx < elements.length) {
+          var elem = elements[element_idx];
+          // Check if this line's content matches the element's content
+          if (trimmed.contains (elem.content) || elem.content.contains (trimmed.replace ("#", "").strip ())) {
+            matched_element = elem;
+            element_idx++;
+          }
+        }
 
+        // Apply styling based on what we find in the line directly
         if (line.has_prefix ("#")) {
-          int hash_count = 0;
+          int level = 0;
           int char_pos = 0;
 
-          while (char_pos < line.length && line[char_pos] == '#') {
-            hash_count++;
+          while (char_pos < line.length && line[char_pos] == '#' && level < 6) {
+            level++;
             char_pos++;
           }
 
-          int first_non_hash = char_pos;
-
-          while (first_non_hash < line.length && line[first_non_hash].isspace ()) {
-            first_non_hash++;
+          // Skip space after #
+          if (char_pos < line.length && line[char_pos] == ' ') {
+            char_pos++;
           }
 
-          bool valid_heading = hash_count > 0 && hash_count <= 6;
-
-          if (valid_heading && first_non_hash == char_pos && first_non_hash < line.length) {
-            valid_heading = false;
+          // Hide the # markers and space
+          if (char_pos > 0) {
+            Gtk.TextIter marker_end = line_start;
+            marker_end.forward_chars (char_pos);
+            buffer.apply_tag (hidden_tag, line_start, marker_end);
           }
 
-          if (valid_heading) {
+          // Apply heading style to remaining text
+          if (char_pos < line.length) {
+            Gtk.TextIter text_start = line_start;
+            text_start.forward_chars (char_pos);
+
             Gtk.TextTag? tag = null;
-
-            switch (hash_count) {
-            case 1 :
-              tag = heading1_tag;
-              break;
-            case 2 :
-              tag = heading2_tag;
-              break;
-            case 3 :
-              tag = heading3_tag;
-              break;
-            case 4 :
-              tag = heading4_tag;
-              break;
-            case 5 :
-              tag = heading5_tag;
-              break;
-            case 6 :
-              tag = heading6_tag;
-              break;
+            switch (level) {
+            case 1 : tag = heading1_tag; break;
+            case 2 : tag = heading2_tag; break;
+            case 3 : tag = heading3_tag; break;
+            case 4 : tag = heading4_tag; break;
+            case 5 : tag = heading5_tag; break;
+            case 6 : tag = heading6_tag; break;
             }
 
             if (tag != null) {
-              Gtk.TextIter marker_end = line_start;
-              marker_end.forward_chars (first_non_hash);
-              buffer.apply_tag (hidden_tag, line_start, marker_end);
-
-              if (first_non_hash < line.length) {
-                Gtk.TextIter text_start = line_start;
-                text_start.forward_chars (first_non_hash);
-                buffer.apply_tag (tag, text_start, line_end);
-                print ("  Applied heading%d tag\n", hash_count);
-              }
+              buffer.apply_tag (tag, text_start, line_end);
             }
+          }
+        } else {
+          // Regular paragraph
+          if (paragraph_tag != null) {
+            buffer.apply_tag (paragraph_tag, line_start, line_end);
           }
         }
       }
 
-      buffer.end_user_action ();
+      // Restore cursor position
+      Gtk.TextIter new_cursor_pos;
+      buffer.get_iter_at_offset (out new_cursor_pos, cursor_offset);
+      buffer.place_cursor (new_cursor_pos);
+    } catch (Error e) {
+      warning ("Error applying styles: %s", e.message);
     } finally {
       updating_preview = false;
     }
