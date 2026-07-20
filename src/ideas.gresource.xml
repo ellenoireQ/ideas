@@ -3,5 +3,6 @@
   <gresource prefix="/com/ellenoireq/ideas">
     <file preprocess="xml-stripblanks">window.ui</file>
     <file preprocess="xml-stripblanks">shortcuts-dialog.ui</file>
+    <file alias="style.css">../data/style.css</file>
   </gresource>
 </gresources>

@@ -43,7 +43,10 @@ public class Ideas.Window : Adw.ApplicationWindow {
 
   construct {
     var buffer = preview_text_view.get_buffer ();
-    setup_preview_tags ();
+    
+    preview_text_view.add_css_class ("markdown-preview");
+    
+    setup_text_tags ();
 
     buffer.changed.connect (() => {
       if (updating_preview) {
@@ -64,6 +67,40 @@ public class Ideas.Window : Adw.ApplicationWindow {
         return Source.REMOVE;
       });
     });
+  }
+
+  private void setup_text_tags () {
+    var buffer = preview_text_view.get_buffer ();
+
+    heading1_tag = buffer.create_tag ("heading1", 
+      "weight", Pango.Weight.BOLD, 
+      "scale", 2.0);
+    
+    heading2_tag = buffer.create_tag ("heading2", 
+      "weight", Pango.Weight.BOLD, 
+      "scale", 1.6);
+    
+    heading3_tag = buffer.create_tag ("heading3", 
+      "weight", Pango.Weight.BOLD, 
+      "scale", 1.35);
+    
+    heading4_tag = buffer.create_tag ("heading4", 
+      "weight", Pango.Weight.BOLD, 
+      "scale", 1.2);
+    
+    heading5_tag = buffer.create_tag ("heading5", 
+      "weight", Pango.Weight.BOLD, 
+      "scale", 1.1);
+    
+    heading6_tag = buffer.create_tag ("heading6", 
+      "weight", Pango.Weight.BOLD, 
+      "scale", 1.0);
+    
+    paragraph_tag = buffer.create_tag ("paragraph");
+    
+    hidden_tag = buffer.create_tag ("hidden", 
+      "foreground", "#00000000", 
+      "size", 1);
   }
 
   private void on_text_changed () {
@@ -103,19 +140,6 @@ public class Ideas.Window : Adw.ApplicationWindow {
     } catch (FileError e) {
       warning ("Autosave failed: %s", e.message);
     }
-  }
-
-  private void setup_preview_tags () {
-    var preview_buffer = preview_text_view.get_buffer ();
-
-    heading1_tag = preview_buffer.create_tag ("heading1", "weight", Pango.Weight.BOLD, "scale", 2.0);
-    heading2_tag = preview_buffer.create_tag ("heading2", "weight", Pango.Weight.BOLD, "scale", 1.6);
-    heading3_tag = preview_buffer.create_tag ("heading3", "weight", Pango.Weight.BOLD, "scale", 1.35);
-    heading4_tag = preview_buffer.create_tag ("heading4", "weight", Pango.Weight.BOLD, "scale", 1.2);
-    heading5_tag = preview_buffer.create_tag ("heading5", "weight", Pango.Weight.BOLD, "scale", 1.1);
-    heading6_tag = preview_buffer.create_tag ("heading6", "weight", Pango.Weight.BOLD, "scale", 1.0);
-    paragraph_tag = preview_buffer.create_tag ("paragraph");
-    hidden_tag = preview_buffer.create_tag ("hidden", "foreground", "#00000000", "size", 1);
   }
 
   private void apply_inline_styles (string text) {
@@ -168,6 +192,7 @@ public class Ideas.Window : Adw.ApplicationWindow {
         ParsedElement? matched_element = null;
         if (element_idx < elements.length) {
           var elem = elements[element_idx];
+          print ("%s", elem.to_string ());
           // Check if this line's content matches the element's content
           if (trimmed.contains (elem.content) || elem.content.contains (trimmed.replace ("#", "").strip ())) {
             matched_element = elem;
